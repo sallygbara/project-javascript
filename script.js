@@ -224,24 +224,31 @@ taskList.addEventListener('click', (e) => {
  * 8) Initial tasks from API (5 items) with fallback
  * ========================================= */
 async function fetchInitialTasks() {
-    if (tasks.length > 0) return; // do not overwrite existing
+    // אם יש כבר 5 או יותר, אל תעשה כלום
+    if (tasks.length >= 5) return;
+
+    const need = 5 - tasks.length; // כמה חסר כדי להגיע ל-5
 
     const fallback = () => {
         const today = new Date();
         const pad = n => String(n).padStart(2, '0');
         const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-        tasks = [
-            { id: 1001, text: 'Sample A', dueDate: toISO(today), completed: true },
-            { id: 1002, text: 'Sample B', dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)), completed: true },
-            { id: 1003, text: 'Sample C', dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2)), completed: false },
-            { id: 1004, text: 'Sample D', dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3)), completed: false },
-            { id: 1005, text: 'Sample E', dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 4)), completed: false },
-        ];
+
+        // צור עוד 'need' משימות דמו והוסף למערך הקיים
+        const extra = Array.from({ length: need }, (_, i) => ({
+            id: Date.now() + i,
+            text: `Sample ${i + 1}`,
+            dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
+            completed: false,
+        }));
+
+        tasks = tasks.concat(extra);
         saveTasks(tasks);
     };
 
     try {
-        const resp = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=5');
+        // שלוף רק את הכמות שחסרה
+        const resp = await fetch(`https://jsonplaceholder.typicode.com/todos?_limit=${need}`);
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
 
@@ -249,15 +256,16 @@ async function fetchInitialTasks() {
         const pad = n => String(n).padStart(2, '0');
         const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-        tasks = data.map((todo, i) => ({
+        const extra = data.map((todo, i) => ({
             id: todo.id,
             text: todo.title || `Task #${i + 1}`,
             dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
             completed: !!todo.completed
         }));
+
+        tasks = tasks.concat(extra);
         saveTasks(tasks);
-    } catch (err) {
-        console.warn('Fetch failed, using fallback:', err);
+    } catch {
         fallback();
     }
 }
