@@ -7,7 +7,7 @@
 html,
 body {
     height: 100%;
-    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif;
 }
 
 body {
@@ -33,6 +33,7 @@ body {
     padding: 16px;
 }
 
+/* מסתיר את ה-labels לשמירה על נגישות (ויזואלית מוסתר) */
 .text label {
     position: absolute !important;
     width: 1px;
@@ -68,19 +69,20 @@ body {
 
 
 
+/* כפתור הוספה */
 .text button {
     padding: 12px 18px;
     border: 1px solid white;
-    background:bisque;
+    background: #dbe4ff;
     color: black;
     border-radius: 14px;
     font-weight: 600;
+    cursor: pointer;
 }
 
 .text button:hover {
     transform: translateY(-1px);
     filter: brightness(.98);
-    background: lemonchiffon;
 }
 
 .text button {
@@ -88,6 +90,7 @@ body {
     box-shadow: 0 0 0 3px rgb(255, 252, 252);
 }
 
+/* כרטיס לבן עבור המסננים */
 .button {
     max-width: 1000px;
     margin: 0 auto;
@@ -101,6 +104,7 @@ body {
     flex-wrap: wrap;
 }
 
+/* כפתורי סינון רגילים בעיצוב “pill” (ללא chips) */
 .button>button {
     padding: 10px 16px;
     border-radius: 999px;
@@ -108,6 +112,7 @@ body {
     background:floralwhite;
     color: #0f172a;
     font-weight: 600;
+    cursor: pointer;
     transition: .12s ease, transform .12s ease;
 }
 
@@ -131,10 +136,103 @@ body {
     background:bisque;
     color: #0f172a;
     font-weight: 600;
+    cursor: pointer;
 }
 
 .text1 button:hover {
     background:lemonchiffon;
+}
+/* --- Fix list bullets & spacing --- */
+.text1 ul,
+.text1 ul li {
+    list-style: none;
+}
+
+.text1 ul {
+    padding-left: 0;
+}
+
+/* --- Row layout: left (text+due) | right (actions) --- */
+.text1 ul li.task-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    /* left grows, right hugs */
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid #eddccf;
+    border-radius: 12px;
+    background: #fff;
+    margin-bottom: 10px;
+}
+
+/* Left side */
+.task-left {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    /* allows ellipsis */
+    flex-wrap: wrap;
+}
+
+.task-title {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.task-title.done {
+    text-decoration: line-through;
+    opacity: .7;
+}
+
+.task-sep {
+    color: #c7c7c7;
+}
+
+/* the vertical bar “|” */
+.task-due {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Right side (buttons) */
+.task-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.pill {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #e6dacd;
+    background: #fde4c7;
+    font-weight: 700;
+    cursor: pointer;
+    transition:  .12s ease, transform .12s ease;
+}
+
+.pill:hover {
+    background: #fff2d8;
+    transform: translateY(-1px);
+}
+
+.pill.danger {
+    background: #ffe1d9;
+}
+
+/* Mobile: stack nicely */
+@media (max-width: 720px) {
+    .text1 ul li.task-item {
+        grid-template-columns: 1fr;
+    }
+
+    .task-actions {
+        justify-self: start;
+    }
 }
 
 @media (max-width: 720px) {
