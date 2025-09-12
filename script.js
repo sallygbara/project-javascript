@@ -3,16 +3,15 @@
 /* =========================================
  * 1) Get elements from the DOM
  * ========================================= */
-const form = document.querySelector('.text form');
+const form = document.getElementById('taskForm');
 const descInput = document.getElementById('taskDescription');
 const dateInput = document.getElementById('taskDueDate');
-const taskList = document.querySelector('.text1 ul');   // use the single UL inside .text1
+const taskList = document.getElementById('tasksList');
 
-// Filter buttons in your HTML order: All / Completed / Pending
-const [btnAll, btnCompleted, btnPending] = document.querySelectorAll('.button > button');
-
-// Sort-by-date button (the one inside .text1, above the UL)
-const sortBtn = document.querySelector('.text1 > button');
+const btnAll = document.getElementById('btnAll');
+const btnCompleted = document.getElementById('btnCompleted');
+const btnPending = document.getElementById('btnPending');
+const sortBtn = document.getElementById('sortBtn');
 
 
 /* =========================================
@@ -20,15 +19,17 @@ const sortBtn = document.querySelector('.text1 > button');
  * ========================================= */
 function getTasks() {
     try {
-        const raw = localStorage.getItem('tasks');
-        return raw ? JSON.parse(raw) : [];
+        const firstask = localStorage.getItem('tasks');
+        return firstask ? JSON.parse(raw) : [];
     } catch {
         return [];
     }
 }
-function saveTasks(arr) {
-    localStorage.setItem('tasks', JSON.stringify(arr));
+function saveTasks(tasks) {
+    const jsonString = JSON.stringify(tasks);
+    localStorage.setItem("tasks", jsonString);
 }
+
 
 
 /* =========================================
@@ -36,7 +37,7 @@ function saveTasks(arr) {
  * ========================================= */
 let tasks = [];             // { id, text, dueDate:'YYYY-MM-DD', completed:boolean }
 let currentFilter = 'all';  // 'all' | 'completed' | 'active'   (we map "pending"→"active")
-
+tasks = getTasks();  // <- זו הקריאה שנטענת את המשימות מה-localStorage
 
 /* =========================================
  * 4) renderTasks():
@@ -46,17 +47,9 @@ let currentFilter = 'all';  // 'all' | 'completed' | 'active'   (we map "pending
  * ========================================= */
 function renderTasks() {
     taskList.innerHTML = '';
-    const visible = sortTasks(filterTasks(tasks, currentFilter));
+    const filteredTasks = sortTasks(filterTasks(tasks, currentFilter));
 
-    if (visible.length === 0) {
-        const li = document.createElement('li');
-        li.textContent = 'No tasks to display.';
-        li.style.opacity = '0.7';
-        taskList.appendChild(li);
-        return;
-    }
-
-    visible.forEach((t) => {
+    filteredTasks.forEach((t) => {
         const li = document.createElement('li');
         li.className = 'task-item';
 
@@ -68,18 +61,20 @@ function renderTasks() {
         title.className = 'task-title';
         title.textContent = t.text;
         if (t.completed) title.classList.add('done');
+        left.appendChild(title);
 
-        const sep = document.createElement('span');
-        sep.className = 'task-sep';
-        sep.textContent = ' | ';
+        if (t.dueDate) {
+            const first = document.createElement('span');
+            first.className = 'task-first';
+            first.textContent = ' | ';
 
-        const due = document.createElement('small');
-        due.className = 'task-due';
-        due.textContent = t.dueDate ? `Due: ${t.dueDate}` : '';
+            const second = document.createElement('small');
+            second.className = 'task-second';
+            second.textContent = `Due: ${t.dueDate}`;
 
-        // אם אין תאריך, אל תציג את הקו המפריד
-        left.append(title);
-        if (t.dueDate) left.append(sep, due);
+            left.appendChild(first);
+            left.appendChild(second);
+        }
 
         // RIGHT: actions
         const actions = document.createElement('div');
@@ -87,23 +82,26 @@ function renderTasks() {
 
         const completeBtn = document.createElement('button');
         completeBtn.type = 'button';
-        completeBtn.className = 'pill btn-complete';
         completeBtn.dataset.action = 'complete';
         completeBtn.dataset.id = String(t.id);
         completeBtn.textContent = t.completed ? 'Uncomplete' : 'Complete';
 
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
-        deleteBtn.className = 'pill danger btn-delete';
         deleteBtn.dataset.action = 'delete';
         deleteBtn.dataset.id = String(t.id);
         deleteBtn.textContent = 'Delete';
 
-        actions.append(completeBtn, deleteBtn);
-        li.append(left, actions);
+        actions.appendChild(completeBtn);
+        actions.appendChild(deleteBtn);
+
+        li.appendChild(left);
+        li.appendChild(actions);
+
         taskList.appendChild(li);
     });
 }
+
 
 
 

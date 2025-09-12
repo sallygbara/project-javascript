@@ -4,17 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Task Manager</title>
     <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
     <h1 class="title">Task Manager</h1>
 
     <div class="text">
-        <form onsubmit="test()">
-            <label for="taskDescription">Task description</label>
+        <form id="taskForm">
+            <label for="taskDescription ">Task description</label>
             <input id="taskDescription" type="text" placeholder="Description" />
 
             <label for="taskDueDate">Deadline</label>
@@ -25,22 +24,18 @@
     </div>
 
     <div class="button">
-        <button>All</button>
-        <button>Completed</button>
-        <button>Pending</button>
-
-        <div class="text1">
-            <button>sort by date</button>
-            <ul></ul>
-                        <ul></ul>
-            <ul></ul>
-            <ul></ul>
-            <ul></ul>
-
-
-        </div>
+        <button id="btnAll">All</button>
+        <button id="btnCompleted">Completed</button>
+        <button id="btnPending">Pending</button>
     </div>
-    <script src="./script.js"></script>
+
+    <div class="text1">
+        <button id="sortBtn" type="button">sort by date</button>
+
+        <ul id="tasksList"></ul>
+    </div>
+
+    <script src="./script.js" defer></script>
 </body>
 
 </html>
