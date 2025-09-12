@@ -13,67 +13,74 @@ const btnCompleted = document.getElementById('btnCompleted');
 const btnPending = document.getElementById('btnPending');
 const sortBtn = document.getElementById('sortBtn');
 
-
 /* =========================================
  * 2) Data storage (localStorage)
  * ========================================= */
 function getTasks() {
     try {
         const firstask = localStorage.getItem('tasks');
-        return firstask ? JSON.parse(raw) : [];
+        return firstask ? JSON.parse(firstask) : [];
     } catch {
         return [];
     }
 }
 function saveTasks(tasks) {
-    const jsonString = JSON.stringify(tasks);
-    localStorage.setItem("tasks", jsonString);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
 }
-
-
 
 /* =========================================
  * 3) Global tasks array
  * ========================================= */
-let tasks = [];             // { id, text, dueDate:'YYYY-MM-DD', completed:boolean }
-let currentFilter = 'all';  // 'all' | 'completed' | 'active'   (we map "pending"→"active")
-tasks = getTasks();  // <- זו הקריאה שנטענת את המשימות מה-localStorage
+let tasks = getTasks();      // [{ id, text, dueDate, completed }]
+let currentFilter = 'all';   // 'all' | 'completed' | 'active'
+tasks = getTasks(); // load from localStorage
+
+/* === מיגרציה: לתת id למשימות ישנות שחסר להן (חד-פעמי) === */
+function migrateIdsIfMissing() {
+    let changed = false;
+    tasks.forEach(t => {
+        if (t.id == null) { // undefined/null
+            t.id = Date.now() + Math.floor(Math.random() * 1e6);
+            changed = true;
+        }
+    });
+    if (changed) saveTasks(tasks);
+}
 
 /* =========================================
- * 4) renderTasks():
- *    - Clear list
- *    - Create <li> per task: text + due + Complete/Delete
- *    - Add CSS for completed (line-through)
+ * 4) renderTasks()
  * ========================================= */
 function renderTasks() {
     taskList.innerHTML = '';
     const filteredTasks = sortTasks(filterTasks(tasks, currentFilter));
+
+   
 
     filteredTasks.forEach((t) => {
         const li = document.createElement('li');
         li.className = 'task-item';
 
         // LEFT: title | due
-        const left = document.createElement('div');
-        left.className = 'task-left';
+        const taskInfo = document.createElement('div');
+        taskInfo.className = 'task-left';
 
         const title = document.createElement('span');
         title.className = 'task-title';
         title.textContent = t.text;
         if (t.completed) title.classList.add('done');
-        left.appendChild(title);
+        taskInfo.appendChild(title);
 
         if (t.dueDate) {
             const first = document.createElement('span');
             first.className = 'task-first';
             first.textContent = ' | ';
 
-            const second = document.createElement('small');
-            second.className = 'task-second';
+            const second = document.createElement('span');
+            second.className = 'task-second'; // ודאי שיש CSS למחלקה הזו
             second.textContent = `Due: ${t.dueDate}`;
 
-            left.appendChild(first);
-            left.appendChild(second);
+            taskInfo.appendChild(first);
+            taskInfo.appendChild(second);
         }
 
         // RIGHT: actions
@@ -90,39 +97,30 @@ function renderTasks() {
         deleteBtn.type = 'button';
         deleteBtn.dataset.action = 'delete';
         deleteBtn.dataset.id = String(t.id);
+        deleteBtn.className = 'btn-delete';
         deleteBtn.textContent = 'Delete';
 
         actions.appendChild(completeBtn);
         actions.appendChild(deleteBtn);
 
-        li.appendChild(left);
+        li.appendChild(taskInfo);
         li.appendChild(actions);
 
         taskList.appendChild(li);
     });
 }
 
-
-
-
-
 /* =========================================
- * 5) addTask():
- *    - Read fields, validate (not empty)
- *    - Build new task object
- *    - Push → save → render → reset
+ * 5) addTask()
  * ========================================= */
 function addTask() {
-    const text = descInput.value.trim();
-    const dueDate = (dateInput.value || '').trim(); // YYYY-MM-DD
+    const text = descInput.value;
+    const dueDate = dateInput.value;
 
-    if (!text || !dueDate) {
-        alert('Please fill in task description and due date.');
-        return;
-    }
+    if (text === '' || dueDate === '') return;
 
     const newTask = {
-        id: Date.now(),
+        id: Date.now(),      // חובה כדי ש-Delete/Complete יעבדו
         text,
         dueDate,
         completed: false
@@ -131,24 +129,20 @@ function addTask() {
     tasks.push(newTask);
     saveTasks(tasks);
     renderTasks();
-    form.reset();
-    descInput.focus();
-}
 
+    // אם תרצי לנקות שדות: descInput.value = ''; dateInput.value = '';
+}
 
 /* =========================================
  * 6) filterTasks() & sortTasks()
- *    - filter: 'all' | 'completed' | 'active'
- *    - sort by due date ascending; empty dates last
  * ========================================= */
-function filterTasks(arr, filterKey) {
-    const key = (filterKey === 'pending') ? 'active' : filterKey; // support “Pending” label
-
-    switch (key) {
-        case 'all': return arr;
-        case 'completed': return arr.filter(t => t.completed);
-        case 'active': return arr.filter(t => !t.completed);
-        default: return arr;
+function filterTasks(tasks, filter) {
+    const tasksone = (filter === 'pending') ? 'active' : filter;
+    switch (tasksone) {
+        case 'all': return tasks;
+        case 'completed': return tasks.filter(t => t.completed);
+        case 'active': return tasks.filter(t => !t.completed);
+        default: return ;tasks
     }
 }
 
@@ -157,37 +151,23 @@ function sortTasks(arr) {
         const da = a.dueDate || '';
         const db = b.dueDate || '';
         if (!da && !db) return 0;
-        if (!da) return 1;   // task with no date goes last
+        if (!da) return 1;   // ללא תאריך – בסוף
         if (!db) return -1;
         return da.localeCompare(db);
     });
 }
 
-
 /* =========================================
  * 7) Event handling
- *    - Add task (form submit)
- *    - Filters: All / Completed / Pending
- *    - Sort by date
- *    - Complete/Delete via event delegation on UL
  * ========================================= */
 form.addEventListener('submit', (e) => {
     e.preventDefault();
     addTask();
 });
 
-btnAll.addEventListener('click', () => {
-    currentFilter = 'all';
-    renderTasks();
-});
-btnCompleted.addEventListener('click', () => {
-    currentFilter = 'completed';
-    renderTasks();
-});
-btnPending.addEventListener('click', () => {
-    currentFilter = 'pending'; // mapped to 'active' by filterTasks()
-    renderTasks();
-});
+btnAll.addEventListener('click', () => { currentFilter = 'all'; renderTasks(); });
+btnCompleted.addEventListener('click', () => { currentFilter = 'completed'; renderTasks(); });
+btnPending.addEventListener('click', () => { currentFilter = 'pending'; renderTasks(); });
 
 sortBtn?.addEventListener('click', () => {
     tasks = sortTasks(tasks);
@@ -195,72 +175,60 @@ sortBtn?.addEventListener('click', () => {
     renderTasks();
 });
 
-// Single listener that handles both Complete & Delete for any task row
+// Complete/Delete via event delegation on UL
 taskList.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
 
     const action = btn.dataset.action;
-    const id = Number(btn.dataset.id || NaN);
-    if (!action || !id) return;
+    const id = Number(btn.dataset.id);
+    if (!action || Number.isNaN(id)) return; // בדיקה בטוחה
 
     if (action === 'complete') {
         const task = tasks.find(t => t.id === id);
         if (!task) return;
         task.completed = !task.completed;
-        saveTasks(tasks);
-        renderTasks();
     } else if (action === 'delete') {
         tasks = tasks.filter(t => t.id !== id);
-        saveTasks(tasks);
-        renderTasks();
     }
+    saveTasks(tasks);
+    renderTasks();
 });
-
 
 /* =========================================
  * 8) Initial tasks from API (5 items) with fallback
  * ========================================= */
 async function fetchInitialTasks() {
-    // אם יש כבר 5 או יותר, אל תעשה כלום
     if (tasks.length >= 5) return;
 
-    const need = 5 - tasks.length; // כמה חסר כדי להגיע ל-5
+    const need = 5 - tasks.length;
+    const pad = n => String(n).padStart(2, '0');
+    const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
     const fallback = () => {
         const today = new Date();
-        const pad = n => String(n).padStart(2, '0');
-        const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-
-        // צור עוד 'need' משימות דמו והוסף למערך הקיים
         const extra = Array.from({ length: need }, (_, i) => ({
             id: Date.now() + i,
             text: `Sample ${i + 1}`,
             dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
             completed: false,
         }));
-
         tasks = tasks.concat(extra);
         saveTasks(tasks);
     };
 
     try {
-        // שלוף רק את הכמות שחסרה
         const resp = await fetch(`https://jsonplaceholder.typicode.com/todos?_limit=${need}`);
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
 
         const today = new Date();
-        const pad = n => String(n).padStart(2, '0');
-        const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-
         const extra = data.map((todo, i) => ({
             id: todo.id,
             text: todo.title || `Task #${i + 1}`,
             dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
             completed: !!todo.completed
         }));
-
         tasks = tasks.concat(extra);
         saveTasks(tasks);
     } catch {
@@ -268,16 +236,12 @@ async function fetchInitialTasks() {
     }
 }
 
-
 /* =========================================
  * 9) Init on page load
  * ========================================= */
 (async function init() {
     tasks = getTasks();        // load from localStorage
-    await fetchInitialTasks(); // seed if empty
+    migrateIdsIfMissing();     // ← נותן id למשימות ישנות שחסר להן
+    await fetchInitialTasks(); // seed אם צריך (עד 5 סה״כ)
     renderTasks();             // first paint
 })();
-
-
-
-
