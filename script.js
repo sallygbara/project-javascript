@@ -195,52 +195,39 @@ taskList.addEventListener('click', (e) => {
 
 
 
-
 /* =========================================
- * 8) Initial tasks from API – השלמה עד 5
+ * 8) טעינת משימות התחלתיות מה-API (בדיוק 5)
  * ========================================= */
 async function fetchInitialTasks() {
-    // כמה חסר כדי להגיע ל-5
-    const need = Math.max(0, 5 - tasks.length);
-    if (need === 0) return;
+    // 1) בקשת GET ל-API עם limit=5
+    const response = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=5')
+        .catch(() => null);
 
-    const pad = n => String(n).padStart(2, '0');
-    const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    // 2) ודאו תגובה תקינה (200)
+    if (!response || !response.ok) return;
+
+    // 3) חילוץ הנתונים מהתגובה
+    const data = await response.json().catch(() => null);
+    if (!Array.isArray(data)) return;
+
+    // 4) מיפוי הנתונים למבנה האפליקציה (text, dueDate, completed)
+    const pad = (n) => String(n).padStart(2, '0');
+    const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     const today = new Date();
 
-    const addSamples = (n) => {
-        const extra = Array.from({ length: n }, (_, i) => ({
-            id: `s_${Date.now()}_${i}`,               // מזהה ייחודי כמחרוזת
-            text: `Sample ${tasks.length + i + 1}`,
-            dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
-            completed: false
-        }));
-        tasks = tasks.concat(extra);
-        saveTasks(tasks);
-    };
+    const initialTasks = data.slice(0, 5).map((todo, i) => ({
+        id: String(todo.id),
+        text: todo.title || `Task #${i + 1}`,
+        dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
+        completed: !!todo.completed
+    }));
 
-    try {
-        const resp = await fetch(`https://jsonplaceholder.typicode.com/todos?_limit=${need}`);
-        const data = await resp.json();
+    // 5) שמירה למערך האפליקציה ול-localStorage
+    tasks = initialTasks;        // ← בדיוק 5, לא מצטבר מעבר
+    saveTasks(tasks);
 
-        const extra = data.map((todo, i) => ({
-            id: `api_${String(todo.id)}`,             // תמיד כמחרוזת + prefix למניעת התנגשויות
-            text: todo.title || `Task #${tasks.length + i + 1}`,
-            dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
-            completed: !!todo.completed
-        }));
-
-        tasks = tasks.concat(extra);
-        saveTasks(tasks);
-
-        // אם ה-API החזיר פחות מהמבוקש (קורה לפעמים), נשלים בדוגמאות
-        const stillNeed = Math.max(0, 5 - tasks.length);
-        if (stillNeed > 0) addSamples(stillNeed);
-
-    } catch {
-        // אין רשת? נמלא דוגמאות
-        addSamples(need);
-    }
+    // 6) רנדר
+    renderTasks();
 }
 
 /* =========================================
