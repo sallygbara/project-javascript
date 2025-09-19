@@ -107,7 +107,6 @@ function addTask() {
     if (text === '' || dueDate === '') return;
 
     const newTask = {
-        id: String(Date.now()), 
         text: text,
         dueDate: dueDate,
         completed: false
@@ -204,7 +203,6 @@ async function fetchInitialTasks() {
     const today = new Date();
 
     const initialTasks = data.slice(0, 5).map((todo, i) => ({
-        id: String(todo.id),
         text: todo.title || `Task #${i + 1}`,
         dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
         completed: !!todo.completed
