@@ -69,16 +69,16 @@ function buildTaskItem(t) {
     left.appendChild(title);
 
     if (t.dueDate) {
-        const first = document.createElement('span');
-        first.className = 'task-first';
-        first.innerText = ' | ';
+        const sep = document.createElement('span');
+        sep.className = 'task-first';
+        sep.innerText = ' | ';
 
-        const second = document.createElement('span');
-        second.className = 'task-second';
-        second.innerText = `Due: ${t.dueDate}`;
+        const due = document.createElement('span');
+        due.className = 'task-second';
+        due.innerText = `Due: ${t.dueDate}`;
 
-        left.appendChild(first);
-        left.appendChild(second);
+        left.appendChild(sep);
+        left.appendChild(due);
     }
 
     const actions = document.createElement('div');
@@ -118,8 +118,8 @@ function buildTaskItem(t) {
  * 5) addTask()
  * ========================================= */
 
-function addTask() {
-    const text = descInput ? descInput.value : '';
+function addTask(e) {
+    const text = descInput ? descInput.value.trim() : '';
     const dueDate = dateInput ? dateInput.value : '';
 
     if (text === '' || dueDate === '') return;
@@ -132,9 +132,9 @@ function addTask() {
 
     tasks.push(newTask);
     saveTasks(tasks);
-    renderTasks();
 
-}
+    currentFilter = 'all';  
+    renderTasks()}
 
 
 
@@ -209,38 +209,28 @@ taskList.addEventListener('click', (e) => {
  * 8) API  
  * ========================================= */
 async function fetchInitialTasks() {
-    if (tasks.length > 0) return;
-
-    const response = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=5')
-        .catch(() => null);
-    if (!response || !response.ok) return;
-
-    const todos = await response.json().catch(() => null);
+    const res = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=5').catch(() => null);
+    if (!res?.ok) return;
+    const todos = await res.json().catch(() => null);
     if (!Array.isArray(todos)) return;
 
-    const date = (num) => String(num).dateStart(2, '0');
-    const formatISODate = (dateObj) =>
-        `${dateObj.getFullYear()}-${date(dateObj.getMonth() + 1)}-${date(dateObj.getDate())}`;
+    const pad = n => String(n).padStart(2, '0');
+    const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const today = new Date();
 
-    const todayDate = new Date();
-
-    const seedTasks = todos.map((todoItem, idx) => ({
-        text: todoItem.title || `Task #${idx + 1}`,
-        dueDate: formatISODate(new Date(
-            todayDate.getFullYear(),
-            todayDate.getMonth(),
-            todayDate.getDate() + idx
-        )),
-        completed: !!todoItem.completed
+    // מחליפים לגמרי את המערך בקבוע של 5
+    tasks = todos.map((t, i) => ({
+        text: t.title || `Task #${i + 1}`,
+        dueDate: fmt(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
+        completed: !!t.completed
     }));
-
-    for (const taskItem of seedTasks) {
-        tasks.push(taskItem);
-    }
 
     saveTasks(tasks);
     renderTasks();
 }
+
+
+
 
 (async function init() {
     tasks = getTasks();
