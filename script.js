@@ -214,28 +214,20 @@ async function fetchInitialTasks() {
     const todos = await res.json().catch(() => null);
     if (!Array.isArray(todos)) return;
 
-    const pad = n => String(n).padStart(2, '0');
-    const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const data1 = n => String(n).padStart(2, '0');
+    const data2 = d => `${d.getFullYear()}-${data1(d.getMonth() + 1)}-${data1(d.getDate())}`;
     const today = new Date();
 
-    // מחליפים לגמרי את המערך בקבוע של 5
     tasks = todos.map((t, i) => ({
         text: t.title || `Task #${i + 1}`,
-        dueDate: fmt(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
+        dueDate:data2(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
         completed: !!t.completed
     }));
 
     saveTasks(tasks);
-    renderTasks();
+    renderTasks();                         
 }
 
-
-
-
 (async function init() {
-    tasks = getTasks();
     await fetchInitialTasks();
-    renderTasks();
 })();
-
-
