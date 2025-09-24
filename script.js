@@ -218,9 +218,9 @@ async function fetchInitialTasks() {
     const todos = await response.json().catch(() => null);
     if (!Array.isArray(todos)) return;
 
-    const date = (num) => String(num).padStart(2, '0');
+    const date = (num) => String(num).dateStart(2, '0');
     const formatISODate = (dateObj) =>
-        `${dateObj.getFullYear()}-${date(dateObj.getMonth() + 1)}-${pad2(dateObj.getDate())}`;
+        `${dateObj.getFullYear()}-${date(dateObj.getMonth() + 1)}-${date(dateObj.getDate())}`;
 
     const todayDate = new Date();
 
