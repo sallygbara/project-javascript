@@ -42,32 +42,33 @@ tasks = getTasks();
  * ========================================= */
 function renderTasks() {
     taskList.innerHTML = '';
-    const filteredTasks = sortTasks(filterTasks(tasks, currentFilter));
+ const filteredTasks = sortTasks(filterTasks(tasks, currentFilter));
+
 
     filteredTasks.forEach((t) => {
         const li = document.createElement('li');
         li.className = 'task-item';
 
-        const taskInfo = document.createElement('div');
-        taskInfo.className = 'task-left';
+        const left = document.createElement('div');
+        left.className = 'task-left';
 
         const title = document.createElement('span');
         title.className = 'task-title';
         title.textContent = t.text;
         if (t.completed) title.classList.add('done');
-        taskInfo.appendChild(title);
+        left.appendChild(title);
 
         if (t.dueDate) {
             const first = document.createElement('span');
-            first.className = 'task-first';
+           first .className = 'task-first';
             first.textContent = ' | ';
 
             const second = document.createElement('span');
             second.className = 'task-second';
             second.textContent = `Due: ${t.dueDate}`;
 
-            taskInfo.appendChild(first);
-            taskInfo.appendChild(second);
+            left.appendChild(first);
+            left.appendChild(second);
         }
 
         const actions = document.createElement('div');
@@ -75,26 +76,34 @@ function renderTasks() {
 
         const completeBtn = document.createElement('button');
         completeBtn.type = 'button';
-        completeBtn.dataset.action = 'complete';
-        completeBtn.dataset.id = String(t.id);
         completeBtn.textContent = t.completed ? 'Uncomplete' : 'Complete';
+        completeBtn.addEventListener('click', () => {
+            t.completed = !t.completed;
+            saveTasks(tasks);
+            renderTasks();
+        });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
-        deleteBtn.dataset.action = 'delete';
-        deleteBtn.dataset.id = String(t.id);
         deleteBtn.className = 'btn-delete';
         deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', () => {
+            tasks = tasks.filter(x => x !== t); 
+            saveTasks(tasks);
+            renderTasks();
+        });
 
         actions.appendChild(completeBtn);
         actions.appendChild(deleteBtn);
 
-        li.appendChild(taskInfo);
+        li.appendChild(left);
         li.appendChild(actions);
 
         taskList.appendChild(li);
     });
 }
+
+
 
 /* =========================================
  * 5) addTask()
@@ -122,7 +131,8 @@ function addTask() {
 
 /* =========================================
  * 6) filterTasks() & sortTasks()
- * ========================================= */
+ * ========================================= */   
+
 function filterTasks(tasks, filter) {      
     const key = (filter === 'pending') ? 'active' : filter;
     switch (key) {
@@ -187,38 +197,46 @@ taskList.addEventListener('click', (e) => {
 
 
 /* =========================================
- * 8) טעינת משימה-API
+ * 8) API  
  * ========================================= */
 async function fetchInitialTasks() {
+    if (tasks.length > 0) return;
+
     const response = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=5')
         .catch(() => null);
-
     if (!response || !response.ok) return;
 
-    const data = await response.json().catch(() => null);
-    if (!Array.isArray(data)) return;
+    const todos = await response.json().catch(() => null);
+    if (!Array.isArray(todos)) return;
 
-    const third = (n) => String(n).thirdstart(2, '0');
-    const four = (d) => `${d.getFullYear()}-${third(d.getMonth() + 1)}-${third(d.getDate())}`;
-    const today = new Date();
+    const date = (num) => String(num).padStart(2, '0');
+    const formatISODate = (dateObj) =>
+        `${dateObj.getFullYear()}-${date(dateObj.getMonth() + 1)}-${pad2(dateObj.getDate())}`;
 
-    const initialTasks = data.slice(0, 5).map((todo, i) => ({
-        text: todo.title || `Task #${i + 1}`,
-        dueDate: toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)),
-        completed: !!todo.completed
+    const todayDate = new Date();
+
+    const seedTasks = todos.map((todoItem, idx) => ({
+        text: todoItem.title || `Task #${idx + 1}`,
+        dueDate: formatISODate(new Date(
+            todayDate.getFullYear(),
+            todayDate.getMonth(),
+            todayDate.getDate() + idx
+        )),
+        completed: !!todoItem.completed
     }));
 
-    tasks = initialTasks;        
-    saveTasks(tasks);
+    for (const taskItem of seedTasks) {
+        tasks.push(taskItem);
+    }
 
+    saveTasks(tasks);
     renderTasks();
 }
 
-
 (async function init() {
-    tasks = getTasks();        
-    await fetchInitialTasks(); 
-    renderTasks();             
+    tasks = getTasks();
+    await fetchInitialTasks();
+    renderTasks();
 })();
 
 
