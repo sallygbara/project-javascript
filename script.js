@@ -41,59 +41,74 @@ tasks = getTasks();
  * 4) renderTasks()
  * ========================================= */
 function renderTasks() {
-    taskList.innerHTML = '';
-    const filteredTasks = sortTasks(filterTasks(tasks, currentFilter));
+    const tasksListElement = document.getElementById('tasksList');
+    tasksListElement.innerHTML = "";
 
-    filteredTasks.forEach((t) => {
-        const li = document.createElement('li');
-        li.className = 'task-item';
-
-        const taskInfo = document.createElement('div');
-        taskInfo.className = 'task-left';
-
-        const title = document.createElement('span');
-        title.className = 'task-title';
-        title.innerText = t.text;
-        if (t.completed) title.classList.add('done');
-        taskInfo.appendChild(title);
-
-        if (t.dueDate) {
-            const first = document.createElement('span');
-            first.className = 'task-first';
-            first.innerText = ' | ';
-
-            const second = document.createElement('span');
-            second.className = 'task-second';
-            second.innerText = `Due: ${t.dueDate}`;
-
-            taskInfo.appendChild(first);
-            taskInfo.appendChild(second);
+    tasks.forEach((task) => {
+        if (currentFilter === "all") {
+            tasksListElement.appendChild(buildTaskItem(task));
+        } else if (currentFilter === "completed") {
+            if (task.completed) tasksListElement.appendChild(buildTaskItem(task));
+        } else { 
+            if (!task.completed) tasksListElement.appendChild(buildTaskItem(task));
         }
-
-        const actions = document.createElement('div');
-        actions.className = 'task-actions';
-
-        const completeBtn = document.createElement('button');
-        completeBtn.type = 'button';
-        completeBtn.dataset.action = 'complete';
-        completeBtn.dataset.id = String(t.id);
-        completeBtn.innerText = t.completed ? 'Uncomplete' : 'Complete';
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.dataset.action = 'delete';
-        deleteBtn.dataset.id = String(t.id);
-        deleteBtn.className = 'btn-delete';
-        deleteBtn.innerText = 'Delete';
-
-        actions.appendChild(completeBtn);
-        actions.appendChild(deleteBtn);
-
-        li.appendChild(taskInfo);
-        li.appendChild(actions);
-
-        taskList.appendChild(li);
     });
+}
+
+function buildTaskItem(t) {
+    const li = document.createElement('li');
+    li.className = 'task-item';
+
+    const left = document.createElement('div');
+    left.className = 'task-left';
+
+    const title = document.createElement('span');
+    title.className = 'task-title';
+    title.innerText = t.text;
+    if (t.completed) title.classList.add('done');
+    left.appendChild(title);
+
+    if (t.dueDate) {
+        const first = document.createElement('span');
+        first.className = 'task-first';
+        first.innerText = ' | ';
+
+        const second = document.createElement('span');
+        second.className = 'task-second';
+        second.innerText = `Due: ${t.dueDate}`;
+
+        left.appendChild(first);
+        left.appendChild(second);
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'task-actions';
+
+    const completeBtn = document.createElement('button');
+    completeBtn.type = 'button';
+    completeBtn.innerText = t.completed ? 'Uncomplete' : 'Complete';
+    completeBtn.addEventListener('click', () => {
+        t.completed = !t.completed;
+        saveTasks(tasks);
+        renderTasks();
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn-delete';
+    deleteBtn.innerText = 'Delete';
+    deleteBtn.addEventListener('click', () => {
+        tasks = tasks.filter(x => x !== t);
+        saveTasks(tasks);
+        renderTasks();
+    });
+
+    actions.appendChild(completeBtn);
+    actions.appendChild(deleteBtn);
+    li.appendChild(left);
+    li.appendChild(actions);
+
+    return li;
 }
 
 
