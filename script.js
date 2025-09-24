@@ -42,33 +42,32 @@ tasks = getTasks();
  * ========================================= */
 function renderTasks() {
     taskList.innerHTML = '';
- const filteredTasks = sortTasks(filterTasks(tasks, currentFilter));
-
+    const filteredTasks = sortTasks(filterTasks(tasks, currentFilter));
 
     filteredTasks.forEach((t) => {
         const li = document.createElement('li');
         li.className = 'task-item';
 
-        const left = document.createElement('div');
-        left.className = 'task-left';
+        const taskInfo = document.createElement('div');
+        taskInfo.className = 'task-left';
 
         const title = document.createElement('span');
         title.className = 'task-title';
-        title.textContent = t.text;
+        title.innerText = t.text;
         if (t.completed) title.classList.add('done');
-        left.appendChild(title);
+        taskInfo.appendChild(title);
 
         if (t.dueDate) {
             const first = document.createElement('span');
-           first .className = 'task-first';
-            first.textContent = ' | ';
+            first.className = 'task-first';
+            first.innerText = ' | ';
 
             const second = document.createElement('span');
             second.className = 'task-second';
-            second.textContent = `Due: ${t.dueDate}`;
+            second.innerText = `Due: ${t.dueDate}`;
 
-            left.appendChild(first);
-            left.appendChild(second);
+            taskInfo.appendChild(first);
+            taskInfo.appendChild(second);
         }
 
         const actions = document.createElement('div');
@@ -76,32 +75,27 @@ function renderTasks() {
 
         const completeBtn = document.createElement('button');
         completeBtn.type = 'button';
-        completeBtn.textContent = t.completed ? 'Uncomplete' : 'Complete';
-        completeBtn.addEventListener('click', () => {
-            t.completed = !t.completed;
-            saveTasks(tasks);
-            renderTasks();
-        });
+        completeBtn.dataset.action = 'complete';
+        completeBtn.dataset.id = String(t.id);
+        completeBtn.innerText = t.completed ? 'Uncomplete' : 'Complete';
 
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
+        deleteBtn.dataset.action = 'delete';
+        deleteBtn.dataset.id = String(t.id);
         deleteBtn.className = 'btn-delete';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.addEventListener('click', () => {
-            tasks = tasks.filter(x => x !== t); 
-            saveTasks(tasks);
-            renderTasks();
-        });
+        deleteBtn.innerText = 'Delete';
 
         actions.appendChild(completeBtn);
         actions.appendChild(deleteBtn);
 
-        li.appendChild(left);
+        li.appendChild(taskInfo);
         li.appendChild(actions);
 
         taskList.appendChild(li);
     });
 }
+
 
 
 
